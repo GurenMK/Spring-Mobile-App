@@ -1,5 +1,6 @@
 package com.mobile.app.ws.ui.model.response;
 
+//converts java object into outgoing json response
 //only contains fields that will be returned and are safe to return
 
 public class UserRest {

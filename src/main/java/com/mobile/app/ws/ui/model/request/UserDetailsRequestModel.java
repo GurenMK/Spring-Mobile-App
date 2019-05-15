@@ -1,5 +1,7 @@
 package com.mobile.app.ws.ui.model.request;
 
+//converts incoming json into a java object
+
 public class UserDetailsRequestModel {
 	
 	private String firstName;
