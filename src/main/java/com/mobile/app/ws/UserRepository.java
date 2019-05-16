@@ -7,5 +7,7 @@ import com.mobile.app.ws.io.entity.UserEntity;
 
 @Repository
 public interface UserRepository extends CrudRepository<UserEntity, Long> {
-	//UserEntity findUserByEmail(String email);
+	
+	//per Spring Data JPA query methods start with findBy<field in UserEntity>
+	UserEntity findByEmail(String email);
 }
