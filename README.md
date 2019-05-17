@@ -8,3 +8,4 @@ Uses Maven
 UserDto and UserEntity fields must match
 JSON payload fields must match fields in UserDetailsRequestModel
 Spring security generates a password, User: user
+user authentication url: /users/login
