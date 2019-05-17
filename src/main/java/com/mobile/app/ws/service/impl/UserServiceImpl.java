@@ -2,8 +2,6 @@ package com.mobile.app.ws.service.impl;
 
 import java.util.ArrayList;
 
-import javax.management.RuntimeErrorException;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
@@ -16,8 +14,6 @@ import com.mobile.app.ws.io.entity.UserEntity;
 import com.mobile.app.ws.io.repositories.UserRepository;
 import com.mobile.app.ws.service.UserService;
 import com.mobile.app.ws.shared.dto.UserDto;
-
-import antlr.Utils;
 
 @Service
 public class UserServiceImpl implements UserService {
