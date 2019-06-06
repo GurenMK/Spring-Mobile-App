@@ -8,6 +8,9 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import com.mobile.app.ws.exceptions.UserServiceException;
 import com.mobile.app.ws.service.AddressService;
@@ -33,7 +38,7 @@ import com.mobile.app.ws.ui.model.response.RequestOperationStatus;
 import com.mobile.app.ws.ui.model.response.UserRest;
 
 @RestController
-@RequestMapping("users") //http://localhost:8080/mobile-app-ws/users
+@RequestMapping("/users") //http://localhost:8080/mobile-app-ws/users
 public class UserController {
 	
 	@Autowired
@@ -122,27 +127,46 @@ public class UserController {
 	
 	//http://localhost:8080/mobile-app-ws/users/<user_id>/addresses
 	@GetMapping(path="/{userId}/addresses",
-			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-	public List<AddressesRest> getUserAddresses(@PathVariable String userId) {
+			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
+	public Resources<AddressesRest> getUserAddresses(@PathVariable String userId) {
 		
-		List<AddressesRest> returnValue = new ArrayList<>();
+		List<AddressesRest> addressesListRestModel = new ArrayList<>();
 		List<AddressDto> addressesDto = addressesService.getAddresses(userId);
 		
 		if (addressesDto != null && !addressesDto.isEmpty()) {
 			Type listType = new TypeToken<List<AddressesRest>>() {}.getType();
-			returnValue = new ModelMapper().map(addressesDto, listType);
+			addressesListRestModel = new ModelMapper().map(addressesDto, listType);
+			
+			for (AddressesRest addressRest : addressesListRestModel) {
+				Link addressLink = linkTo(methodOn(UserController.class).getUserAddress(userId, addressRest.getAddressId())).withSelfRel();
+				addressRest.add(addressLink);
+				
+				Link userLink = linkTo(methodOn(UserController.class).getUser(userId)).withRel("user");
+				addressRest.add(userLink);
+			}
 		}
 		
-		return returnValue;
+		return new Resources<>(addressesListRestModel);
 	}
 	
 	@GetMapping(path="/{userId}/addresses/{addressId}",
-			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-	public AddressesRest getUserAddress(@PathVariable String addressId) {
+			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE, "application/hal+json"})
+	public Resource<AddressesRest> getUserAddress(@PathVariable String userId, 
+			@PathVariable String addressId) {
 
 		AddressDto addressDto = addressService.getAddress(addressId);
 		
+		Link addressLink = linkTo(methodOn(UserController.class).getUserAddress(userId, addressId)).withSelfRel();
+		Link userLink = linkTo(methodOn(UserController.class).getUser(userId)).withRel("user");
+		Link addressesLink = linkTo(methodOn(UserController.class).getUserAddresses(userId)).withRel("addresses");
+		//linkTo builds http://localhost:8080/mobile-app-ws/users, methoOn builds the rest
 		
-		return new ModelMapper().map(addressDto, AddressesRest.class);
+		AddressesRest addressesRestModel = new ModelMapper().map(addressDto, AddressesRest.class);
+		addressesRestModel.add(addressLink);
+		addressesRestModel.add(userLink);
+		addressesRestModel.add(addressesLink);
+		//add is supported because of extended ResourceSupport in AddressRest
+		
+		return new Resource<>(addressesRestModel);
 	}
 }
