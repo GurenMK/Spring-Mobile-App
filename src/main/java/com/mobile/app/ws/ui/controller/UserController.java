@@ -1,9 +1,11 @@
 package com.mobile.app.ws.ui.controller;
 
 import java.util.List;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -18,32 +20,40 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mobile.app.ws.exceptions.UserServiceException;
+import com.mobile.app.ws.service.AddressService;
 import com.mobile.app.ws.service.UserService;
+import com.mobile.app.ws.shared.dto.AddressDto;
 import com.mobile.app.ws.shared.dto.UserDto;
 import com.mobile.app.ws.ui.model.request.UserDetailsRequestModel;
+import com.mobile.app.ws.ui.model.response.AddressesRest;
 import com.mobile.app.ws.ui.model.response.ErrorMessages;
 import com.mobile.app.ws.ui.model.response.OperationStatusModel;
 import com.mobile.app.ws.ui.model.response.RequestOperationName;
 import com.mobile.app.ws.ui.model.response.RequestOperationStatus;
 import com.mobile.app.ws.ui.model.response.UserRest;
 
-//import antlr.collections.List;
-
 @RestController
-@RequestMapping("users") //http://localhost:8080/users
+@RequestMapping("users") //http://localhost:8080/mobile-app-ws/users
 public class UserController {
 	
 	@Autowired
 	UserService userService;
 	
-	@GetMapping(path="/{id}",
+	@Autowired
+	AddressService addressService;
+	
+	@Autowired
+	AddressService addressesService;
+	
+	@GetMapping(path="/{userId}",
 			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-	public UserRest getUser(@PathVariable String id) {
+	public UserRest getUser(@PathVariable String userId) {
 		
 		UserRest returnValue = new UserRest();
-		UserDto userDto = userService.getUserByUserId(id);
+		UserDto userDto = userService.getUserByUserId(userId);
 		
-		BeanUtils.copyProperties(userDto, returnValue);
+		ModelMapper modelMapper = new ModelMapper();
+		returnValue = modelMapper.map(userDto, UserRest.class);
 		
 		return returnValue;
 	}
@@ -68,21 +78,21 @@ public class UserController {
 		return returnValue;
 	}
 	
-	@PutMapping(path="/{id}",
+	@PutMapping(path="/{userId}",
 			consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
 			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-	public UserRest updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
+	public UserRest updateUser(@PathVariable String userId, @RequestBody UserDetailsRequestModel userDetails) {
 		UserRest returnValue = new UserRest();
 		UserDto userDto = new UserDto();
 		
 		BeanUtils.copyProperties(userDetails, userDto);
-		UserDto updatedUser = userService.updateUser(id, userDto);
+		UserDto updatedUser = userService.updateUser(userId, userDto);
 		BeanUtils.copyProperties(updatedUser, returnValue);
 		
 		return returnValue;
 	}
 	
-	@DeleteMapping(path="/{id}",
+	@DeleteMapping(path="/{userId}",
 			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
 	public OperationStatusModel deleteUser(@PathVariable String id) {
 		
@@ -110,4 +120,29 @@ public class UserController {
 		return returnValue;
 	}
 	
+	//http://localhost:8080/mobile-app-ws/users/<user_id>/addresses
+	@GetMapping(path="/{userId}/addresses",
+			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+	public List<AddressesRest> getUserAddresses(@PathVariable String userId) {
+		
+		List<AddressesRest> returnValue = new ArrayList<>();
+		List<AddressDto> addressesDto = addressesService.getAddresses(userId);
+		
+		if (addressesDto != null && !addressesDto.isEmpty()) {
+			Type listType = new TypeToken<List<AddressesRest>>() {}.getType();
+			returnValue = new ModelMapper().map(addressesDto, listType);
+		}
+		
+		return returnValue;
+	}
+	
+	@GetMapping(path="/{userId}/addresses/{addressId}",
+			produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+	public AddressesRest getUserAddress(@PathVariable String addressId) {
+
+		AddressDto addressDto = addressService.getAddress(addressId);
+		
+		
+		return new ModelMapper().map(addressDto, AddressesRest.class);
+	}
 }

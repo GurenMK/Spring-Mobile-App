@@ -1,6 +1,8 @@
 package com.mobile.app.ws.ui.model.response;
 
-//converts java object into outgoing json response
+import java.util.List;
+
+//converts java object into outgoing JSON response
 //only contains fields that will be returned and are safe to return
 
 public class UserRest {
@@ -9,6 +11,7 @@ public class UserRest {
 	private String firstName;
 	private String lastName;
 	private String email;
+	private List<AddressesRest> addresses;
 	
 	
 	public String getUserId() {
@@ -35,5 +38,10 @@ public class UserRest {
 	public void setEmail(String email) {
 		this.email = email;
 	}
-	
+	public List<AddressesRest> getAddresses() {
+		return addresses;
+	}
+	public void setAddresses(List<AddressesRest> addresses) {
+		this.addresses = addresses;
+	}
 }
