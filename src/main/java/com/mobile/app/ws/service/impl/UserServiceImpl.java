@@ -1,6 +1,7 @@
 package com.mobile.app.ws.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
@@ -8,6 +9,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,6 +20,7 @@ import com.mobile.app.ws.exceptions.UserServiceException;
 import com.mobile.app.ws.io.entity.UserEntity;
 import com.mobile.app.ws.io.repositories.UserRepository;
 import com.mobile.app.ws.service.UserService;
+import com.mobile.app.ws.shared.Utils;
 import com.mobile.app.ws.shared.dto.AddressDto;
 import com.mobile.app.ws.shared.dto.UserDto;
 import com.mobile.app.ws.ui.model.response.ErrorMessages;
@@ -38,7 +41,7 @@ public class UserServiceImpl implements UserService {
 	public UserDto createUser(UserDto user) {
 		
 		//check if record already exists
-		if (userRepository.findByEmail(user.getEmail()) != null) throw new RuntimeException("Record already exists!");
+		if (userRepository.findByEmail(user.getEmail()) != null) throw new RuntimeException("Record already exists");
 		
 		for (int i = 0; i < user.getAddresses().size(); i++) {
 			AddressDto address = user.getAddresses().get(i);
@@ -50,8 +53,11 @@ public class UserServiceImpl implements UserService {
 		ModelMapper modelMapper = new ModelMapper();
 		UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 		
-		userEntity.setUserId(utils.generateUserId(30));
+		String publicUserId = utils.generateUserId(30);
+		userEntity.setUserId(publicUserId);
 		userEntity.setEcnryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+		userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
+		userEntity.setEmailVerificationStatus(false);
 		
 		UserEntity storedUserDetails = userRepository.save(userEntity); 
 
@@ -74,11 +80,22 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		
 		UserEntity userEntity = userRepository.findByEmail(email);
+		
 		if (userEntity == null) throw new UsernameNotFoundException(email);
 		
-		return new User(userEntity.getEmail(), userEntity.getEcnryptedPassword(), new ArrayList<>());
+		String username = userEntity.getEmail();
+		String password = userEntity.getEcnryptedPassword();
+		Collection<? extends GrantedAuthority> authorities = new ArrayList<>();
+		//return new User(username, password, authorities);
+		
+		boolean accountNonExpired = true;
+		boolean credentialsNonExpired = true;
+		boolean accountNonLocked = true;
+	
+		return new User(username, password, 
+				userEntity.getEmailVerificationStatus(), accountNonExpired, 
+				credentialsNonExpired, accountNonLocked, authorities);
 	}
 
 	@Override
@@ -137,6 +154,24 @@ public class UserServiceImpl implements UserService {
 			returnValue.add(userDto);
 		}
 		
+		return returnValue;
+	}
+
+	@Override
+	public boolean verifyEmailToken(String token) {
+		boolean returnValue = false;
+		
+		UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
+		
+		if (userEntity != null) {
+			boolean hasTokenExpired = Utils.hasTokenExpired(token);
+			if (!hasTokenExpired) {
+				userEntity.setEmailVerificationToken(null);
+				userEntity.setEmailVerificationStatus(Boolean.TRUE);
+				userRepository.save(userEntity);
+				returnValue = true;
+			}
+		}
 		return returnValue;
 	}
 
