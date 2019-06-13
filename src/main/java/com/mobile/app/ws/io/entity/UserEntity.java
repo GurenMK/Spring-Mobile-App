@@ -37,7 +37,7 @@ public class UserEntity implements Serializable {
 	
 	private String emailVerificationToken;
 	
-	@Column(nullable=false)
+	@Column(nullable=false, columnDefinition = "TINYINT(1)")
 	private Boolean emailVerificationStatus = false;
 	
 	@OneToMany(mappedBy="userDetails", cascade=CascadeType.ALL)

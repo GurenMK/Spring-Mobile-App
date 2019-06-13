@@ -20,6 +20,7 @@ import com.mobile.app.ws.exceptions.UserServiceException;
 import com.mobile.app.ws.io.entity.UserEntity;
 import com.mobile.app.ws.io.repositories.UserRepository;
 import com.mobile.app.ws.service.UserService;
+import com.mobile.app.ws.shared.AmazonSES;
 import com.mobile.app.ws.shared.Utils;
 import com.mobile.app.ws.shared.dto.AddressDto;
 import com.mobile.app.ws.shared.dto.UserDto;
@@ -63,6 +64,9 @@ public class UserServiceImpl implements UserService {
 
 		//BeanUtils.copyProperties(storedUserDetails, returnValue);
 		UserDto returnValue = modelMapper.map(storedUserDetails, UserDto.class);
+		
+		//Send email to user to verify email address
+		new AmazonSES().verifyEmail(returnValue);
 		
 		return returnValue;
 	}
