@@ -2,6 +2,11 @@ package com.mobile.app.ws.shared;
 
 import org.springframework.stereotype.Service;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicSessionCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
@@ -63,12 +68,17 @@ public class AmazonSES {
 		//Unable to load AWS credentials from any provider in the chain
 		//Using ~/.aws/credentials and setting environment variables
 		//Passing credentials through Postman Authorization (AWS Signature)
-		System.setProperty("aws.accessKeyId", "AKIAT2CDKSSOAVZCY7T3"); 
-		System.setProperty("aws.secretKey", "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"); 
+		//System.setProperty("aws.accessKeyId", ""); 
+		//System.setProperty("aws.secretKey", ""); 
 		
-		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.US_EAST_1)
-				.build();
- 
+		//AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.US_EAST_1)
+				//.build();
+		
+
+		
+		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard()
+				.withCredentials(DefaultAWSCredentialsProviderChain.getInstance()).withRegion(Regions.US_EAST_1).build();
+		
 		String htmlBodyWithToken = HTMLBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
 		String textBodyWithToken = TEXTBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
 
