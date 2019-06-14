@@ -23,7 +23,7 @@ public class AmazonSES {
 	
 	final String PASSWORD_RESET_SUBJECT = "Password reset request";
 
-	final String URL_HOST = "ec2-3-86-207-10.compute-1.amazonaws.com";
+	final String URL_HOST = "ec2-3-87-215-8.compute-1.amazonaws.com";
 	
 	// The HTML body for the email.
 	final String HTMLBODY = "<h1>Please verify your email address</h1>"
@@ -62,8 +62,9 @@ public class AmazonSES {
 		
 		//Unable to load AWS credentials from any provider in the chain
 		//Using ~/.aws/credentials and setting environment variables
-		System.setProperty("aws.accessKeyId", "AKIAT2CDKSSOGRRELQMJ"); 
-		System.setProperty("aws.secretKey", "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"); 
+		//Passing credentials through Postman Authorization (AWS Signature)
+		System.setProperty("aws.accessKeyId", "AKIAT2CDKSSOAVZCY7T3"); 
+		System.setProperty("aws.secretKey", "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"); 
 		
 		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.US_EAST_1)
 				.build();
